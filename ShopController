@@ -1,0 +1,59 @@
+class ShopController {
+
+  // This gets run when the presses “pay now”
+  public function pay()
+  {
+    // Get the basket out of the session
+    $basket = $_SESSION[‘basket’];
+
+    // Get the user out of the session
+    $user = $_SESSION[‘user’];
+
+    // Initialise a variable that will hold the price to pay
+    $totalToPay = 0;
+
+    // Add up the price of all the items in the basket
+    foreach ($basket[‘items’] as $item) {
+      $totalToPay += $item[‘price’]         
+    }
+
+    // Get the credit card information the user sent through
+    $creditCardInformation = $_POST[‘credit_card_info’];
+
+    // Get the payment gateway key and post the customer, price and card data to stripe
+    $paymentGatewayKey = ‘A82hDiha9hhdaonldtumpr2390Jf’;
+    $paymentResponse = API::post(‘stripe’, [
+      ‘credit_card’ => $creditCardInfo,
+      ‘customer’ => $user,
+      ‘price’ => $totalToPay
+    ]);
+
+    // If the payment worked, take them to the payment gateway to confirm
+      if ($paymentResponse[‘success’]) {
+      return redirect($paymentResponse[‘redirect_url’]);
+    } else {
+      // Otherwise, show an error
+      throw new Exception(“There was an error when attempting to pay. - ” . $paymentResponse[‘error_message’]);
+    }
+  }
+
+} 
+class ShopController {
+
+  // This runs when the user presses “pay now”
+  public function pay()
+  {
+    // Create a basket to handle our session basket data
+    $basket = new Basket($_SESSION[‘basket’]);
+
+    // Get the current user
+    $user = (new Authenticator)->currentUser();
+
+    // Create a payment request that holds payment data
+    $paymentRequest = new PaymentRequest($_POST);
+
+    // Pay and redirect the user (this throws an exception if there are any issues)
+    return $basket->payAndRedirect($user);
+  }
+
+}
